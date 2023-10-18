@@ -1,8 +1,9 @@
 CXX = clang++
 
 OPT = -O0
+CPPV = c++20
 
-CXXFLAFS = -Wall -Wextra -std=c++17 -v
+CXXFLAFS = -Wall -Wextra -std=$(CPPV)
 DEPFLAGS = -MP -MD
 
 BINARY = unique_ptr_sample.out
@@ -26,3 +27,5 @@ fclean:
 	rm -rf *.o *.d *.out
 
 re: fclean all
+
+rec: fclean all clean
