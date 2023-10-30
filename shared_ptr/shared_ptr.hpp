@@ -9,9 +9,6 @@
 
 #include "stack_allocator.hpp"
 
-// TODO: add make_shared with params
-// add operator 
-
 namespace custom
 {
 	// default value for allocator - 30 bytes
@@ -61,6 +58,7 @@ namespace custom
 				cb->m_counter = 1;
 			}
 			
+			// think about own control_block 
 			explicit shared_ptr(const shared_ptr& other) noexcept
 			{
 				cb = other.cb;
@@ -69,32 +67,47 @@ namespace custom
 			
 			~shared_ptr() noexcept
 			{
-				std::cout << "dtor skipped for object num: " << cb->m_counter << '\n';
-	
 				if (cb == nullptr)
 				{
+					std::cout << "CB == NULLPTR\n";
 					return;
 				}
 
 				--cb->m_counter;
-
 				if(cb->m_counter == 0)
 				{
 					printf("deallocation of shared ptr: root ptr address = %p, counter = %zu, control_block address = %p\n", cb->m_root_ptr, cb->m_counter, cb);
 					
 					delete cb->m_root_ptr;
 					m_alloc_traits::deallocate(m_alloc, cb, cb_size);
+					return;
 				}
+				std::cout << "dtor skipped for object num: " << cb->m_counter << '\n';
 			}
 
 			explicit shared_ptr(shared_ptr&& other) noexcept
 			{
-				// TODO:
+				printf("move operator called, cb = %p, other.cb = %p\n", cb, other.cb);
+				
+				cb = other.cb;
+				other.cb = nullptr;
+				
+				printf("move operator called, cb = %p, other.cb = %p\n", cb, other.cb);
 			}
 
 			explicit operator bool() const noexcept
 			{
 				return cb->m_root_ptr != nullptr;
+			}
+
+			shared_ptr<T, Alloc>& operator=(const shared_ptr<T, Alloc>& other) noexcept
+			{
+				std::cout << "operator=\n";
+				
+				cb = other.cb;
+				++cb->m_counter;
+
+				return *this;
 			}
 
 			reference operator*() const noexcept
