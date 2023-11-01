@@ -3,6 +3,8 @@
 #ifndef SHARED_PTR_HPP
 #define SHARED_PTR_HPP
 
+#define ON_LOGS 0
+
 #include <cstddef>
 #include <memory>
 #include <iostream>
@@ -48,8 +50,9 @@ namespace custom
         public:
             constexpr shared_ptr() noexcept
             {
+#if ON_LOGS
                 std::cout << "default ctor called\n";
-
+#endif
                 cb = static_cast<cb_ptr>(m_alloc_traits::allocate(m_alloc, cb_size));
                 cb->m_counter = 1;
 			}
@@ -73,30 +76,38 @@ namespace custom
             {
                 if (cb == nullptr)
                 {
+#if ON_LOGS
                     std::cout << "CB == NULLPTR\n";
+#endif
                     return;
                 }
 
                 --cb->m_counter;
                 if(cb->m_counter == 0)
                 {
+#if ON_LOGS
                     printf("deallocation of shared ptr: root ptr address = %p, counter = %zu, control_block address = %p\n", cb->m_root_ptr, cb->m_counter, cb);
-					
+#endif			
                     delete cb->m_root_ptr;
                     m_alloc_traits::deallocate(m_alloc, cb, cb_size);
                     return;
                 }
+
+#if ON_LOGS
                 std::cout << "dtor skipped for object num: " << cb->m_counter << '\n';
+#endif
             }
 
             explicit shared_ptr(shared_ptr&& other) noexcept
             {
+#if ON_LOGS
                 printf("move operator called, cb = %p, other.cb = %p\n", cb, other.cb);
-				
+#endif		
                 cb = other.cb;
                 other.cb = nullptr;
-				
+#if ON_LOGS			
                 printf("move operator called, cb = %p, other.cb = %p\n", cb, other.cb);
+#endif
             }
 
             explicit operator bool() const noexcept
@@ -106,8 +117,9 @@ namespace custom
 
             shared_ptr<T, Alloc>& operator=(const shared_ptr<T, Alloc>& other) noexcept
             {
+#if ON_LOGS
                 std::cout << "operator=\n";
-				
+#endif		
                 cb = other.cb;
                 ++cb->m_counter;
 
@@ -139,6 +151,13 @@ namespace custom
     shared_ptr<T, Alloc> make_shared(Args&&... args)
     {
         return shared_ptr<T, Alloc>(new T(std::forward<Args>(args)...));
+    }
+
+    template <typename T, typename Alloc, typename... Args>
+    shared_ptr<T, Alloc> make_shared(Alloc alloc = Alloc(), Args&&... args)
+    {
+        T* ptr = static_cast<T*>(alloc.allocate(sizeof(T)));
+        return shared_ptr<T, Alloc>(::new (ptr) T(std::forward<Args>(args)...));
     }
 }
 
