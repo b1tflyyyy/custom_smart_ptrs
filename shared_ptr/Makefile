@@ -1,7 +1,7 @@
 CXX = clang++
 
 OPT = -O0
-CPPV = c++17
+CPPV = c++20
 
 CXXFLAGS = -Wall -Wextra -std=$(CPPV)
 DEPFLAGS = -MP -MD
