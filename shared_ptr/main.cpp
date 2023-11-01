@@ -15,6 +15,7 @@ int main()
 	std::cout << "*ptr1.get() = " << *ptr1 << "\n\n"; 
 #endif	
 	
+#if 0
 	custom::shared_ptr<int, stack_allocator<void, 30>> ptr333 = custom::make_shared<int, stack_allocator<void, 30>>(666);
 	std::cout << *ptr333 << '\n';
 
@@ -24,7 +25,7 @@ int main()
 	custom::shared_ptr<int, stack_allocator<void, 30>> ptr777(std::move(pt));
 	std::cout << *ptr777 << '\n';
 	std::cout << "count of ptrs = " << ptr777.use_count() << '\n';
-
+#endif
 	// std::cout << "copy: " << *pt << '\n';
 #if 0
 	custom::shared_ptr<int, stack_allocator<void, 30>> ptr100(ptr);
@@ -41,6 +42,9 @@ int main()
 	custom::shared_ptr<int, stack_allocator<void, 30>> ptr12(ptr);
 	custom::shared_ptr<int, stack_allocator<void, 30>> ptr13(ptr);
 #endif
+
+    custom::shared_ptr<int, stack_allocator<void, 400>> ptr = custom::make_shared<int, stack_allocator<void, 400>>(24);
+    std::cout << *ptr << '\n';
 
 	return 0;
 }
