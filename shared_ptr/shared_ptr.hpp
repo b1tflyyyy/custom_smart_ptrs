@@ -3,11 +3,12 @@
 #ifndef SHARED_PTR_HPP
 #define SHARED_PTR_HPP
 
-#define ON_LOGS 0
+#define ON_SHARED_PTR_LOGS 1
 
 #include <cstddef>
 #include <memory>
 #include <iostream>
+#include <cstdint>
 
 #include "stack_allocator.hpp"
 
@@ -50,7 +51,7 @@ namespace custom
         public:
             constexpr shared_ptr() noexcept
             {
-#if ON_LOGS
+#if ON_SHARED_PTR_LOGS
                 std::cout << "default ctor called\n";
 #endif
                 cb = static_cast<cb_ptr>(m_alloc_traits::allocate(m_alloc, cb_size));
@@ -72,11 +73,12 @@ namespace custom
                 ++cb->m_counter;
             }
 			
+            // think about deallocation of control block when counter != 0
             ~shared_ptr() noexcept
             {
                 if (cb == nullptr)
                 {
-#if ON_LOGS
+#if ON_SHARED_PTR_LOGS
                     std::cout << "CB == NULLPTR\n";
 #endif
                     return;
@@ -85,27 +87,28 @@ namespace custom
                 --cb->m_counter;
                 if(cb->m_counter == 0)
                 {
-#if ON_LOGS
+#if ON_SHARED_PTR_LOGS
                     printf("deallocation of shared ptr: root ptr address = %p, counter = %zu, control_block address = %p\n", cb->m_root_ptr, cb->m_counter, cb);
 #endif			
+                    // fix bug with deleting of stack memory
                     delete cb->m_root_ptr;
                     m_alloc_traits::deallocate(m_alloc, cb, cb_size);
                     return;
                 }
 
-#if ON_LOGS
+#if ON_SHARED_PTR_LOGS
                 std::cout << "dtor skipped for object num: " << cb->m_counter << '\n';
 #endif
             }
 
             explicit shared_ptr(shared_ptr&& other) noexcept
             {
-#if ON_LOGS
+#if ON_SHARED_PTR_LOGS
                 printf("move operator called, cb = %p, other.cb = %p\n", cb, other.cb);
 #endif		
                 cb = other.cb;
                 other.cb = nullptr;
-#if ON_LOGS			
+#if ON_SHARED_PTR_LOGS			
                 printf("move operator called, cb = %p, other.cb = %p\n", cb, other.cb);
 #endif
             }
@@ -117,7 +120,7 @@ namespace custom
 
             shared_ptr<T, Alloc>& operator=(const shared_ptr<T, Alloc>& other) noexcept
             {
-#if ON_LOGS
+#if ON_SHARED_PTR_LOGS
                 std::cout << "operator=\n";
 #endif		
                 cb = other.cb;
@@ -147,17 +150,31 @@ namespace custom
             }
 	};
 	
-    template <typename T, typename Alloc, typename... Args>
-    shared_ptr<T, Alloc> make_shared(Args&&... args)
+    // standard make_shared
+    namespace sta
     {
-        return shared_ptr<T, Alloc>(new T(std::forward<Args>(args)...));
+        template <typename T, typename Alloc, typename... Args>
+        shared_ptr<T, Alloc> make_shared(Args&&... args)
+        {
+#if ON_SHARED_PTR_LOGS
+            printf("make shared with new keyword\n");
+#endif
+            return shared_ptr<T, Alloc>(new T(std::forward<Args>(args)...));
+        }
     }
-
-    template <typename T, typename Alloc, typename... Args>
-    shared_ptr<T, Alloc> make_shared(Alloc alloc = Alloc(), Args&&... args)
+    
+    // make shared with custom allocator
+    namespace alc
     {
-        T* ptr = static_cast<T*>(alloc.allocate(sizeof(T)));
-        return shared_ptr<T, Alloc>(::new (ptr) T(std::forward<Args>(args)...));
+        template <typename T, typename Alloc, typename... Args>
+        shared_ptr<T, Alloc> make_shared(Alloc& alloc, Args&&... args)
+        {
+#if ON_SHARED_PTR_LOGS
+            printf("make shared with custom alloc\n");
+#endif
+            std::uint8_t* storage = static_cast<std::uint8_t*>(alloc.allocate(sizeof(T)));
+            return shared_ptr<T, Alloc>(alloc.template construct_at<T>(storage, std::forward<Args>(args)...));   
+        }
     }
 }
 
