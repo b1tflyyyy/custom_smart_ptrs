@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stack>
 #include "stack_allocator.hpp"
 #include "shared_ptr.hpp"
 
@@ -42,8 +43,15 @@ int main()
 	custom::shared_ptr<int, stack_allocator<void, 30>> ptr12(ptr);
 	custom::shared_ptr<int, stack_allocator<void, 30>> ptr13(ptr);
 #endif
-
-    custom::shared_ptr<int, stack_allocator<void, 400>> ptr = custom::make_shared<int, stack_allocator<void, 400>>(24);
+    stack_allocator<void, 500> allocator;  
+    std::cout << "used memory " << allocator.get_memory_used() << '\n';
+    
+    // stack_allocator<void, 400> alloc;
+    auto ptr = custom::alc::make_shared<int, decltype(allocator)>(allocator, 24);
+    std::cout << *ptr << '\n';
+    std::cout << "used memory " << allocator.get_memory_used() << '\n';
+    
+    *ptr = 77;
     std::cout << *ptr << '\n';
 
 	return 0;
