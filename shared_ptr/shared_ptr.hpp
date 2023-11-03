@@ -18,7 +18,7 @@
 namespace custom
 {
 	// default value for allocator - 30 bytes
-    template <typename T, typename Alloc = stack_allocator<void, 30>>
+    template <typename T, typename Alloc = stack_allocator<void, 30>, bool is_stack_object = false>
     class shared_ptr
     {
         // shared_ptr typedef's
@@ -38,6 +38,15 @@ namespace custom
             {
                 std::size_t m_counter = -1;
                 pointer m_root_ptr = nullptr;
+
+                ~control_block() noexcept
+                {
+#if ON_SHARED_PTR_LOGS
+                    printf("~control_block()\n");
+#endif
+                    m_counter = -1;
+                    m_root_ptr = nullptr;
+                }
             };
 			
             typedef control_block* cb_ptr;
@@ -46,7 +55,7 @@ namespace custom
             constexpr static std::size_t cb_size = sizeof(cb_type);
 			
             // control block pointer
-            cb_ptr cb;
+            cb_ptr cb = nullptr;
 		
         public:
             constexpr shared_ptr() noexcept
@@ -66,14 +75,12 @@ namespace custom
                 cb->m_counter = 1;
             }
 			
-            // think about own control_block 
             explicit shared_ptr(const shared_ptr& other) noexcept
             {
                 cb = other.cb;
                 ++cb->m_counter;
             }
 			
-            // think about deallocation of control block when counter != 0
             ~shared_ptr() noexcept
             {
                 if (cb == nullptr)
@@ -90,12 +97,17 @@ namespace custom
 #if ON_SHARED_PTR_LOGS
                     printf("deallocation of shared ptr: root ptr address = %p, counter = %zu, control_block address = %p\n", cb->m_root_ptr, cb->m_counter, cb);
 #endif			
-                    // fix bug with deleting of stack memory
-                    delete cb->m_root_ptr;
+                    if constexpr (!is_stack_object)
+                    {
+                        delete cb->m_root_ptr;
+                    }
+
+                    m_alloc_traits::destroy(m_alloc, cb);
                     m_alloc_traits::deallocate(m_alloc, cb, cb_size);
+
                     return;
                 }
-
+                
 #if ON_SHARED_PTR_LOGS
                 std::cout << "dtor skipped for object num: " << cb->m_counter << '\n';
 #endif
@@ -108,6 +120,7 @@ namespace custom
 #endif		
                 cb = other.cb;
                 other.cb = nullptr;
+
 #if ON_SHARED_PTR_LOGS			
                 printf("move operator called, cb = %p, other.cb = %p\n", cb, other.cb);
 #endif
@@ -118,7 +131,7 @@ namespace custom
                 return cb->m_root_ptr != nullptr;
             }
 
-            shared_ptr<T, Alloc>& operator=(const shared_ptr<T, Alloc>& other) noexcept
+            shared_ptr& operator=(const shared_ptr& other) noexcept
             {
 #if ON_SHARED_PTR_LOGS
                 std::cout << "operator=\n";
@@ -153,7 +166,7 @@ namespace custom
     // standard make_shared
     namespace sta
     {
-        template <typename T, typename Alloc, typename... Args>
+        template <typename T, typename Alloc = stack_allocator<void, 30>, typename... Args>
         shared_ptr<T, Alloc> make_shared(Args&&... args)
         {
 #if ON_SHARED_PTR_LOGS
@@ -166,14 +179,14 @@ namespace custom
     // make shared with custom allocator
     namespace alc
     {
-        template <typename T, typename Alloc, typename... Args>
-        shared_ptr<T, Alloc> make_shared(Alloc& alloc, Args&&... args)
+        template <typename T, typename Alloc = stack_allocator<void, 30>, bool is_stack_object = false, typename... Args>
+        shared_ptr<T, Alloc, is_stack_object> make_shared(Alloc& alloc, Args&&... args)
         {
 #if ON_SHARED_PTR_LOGS
             printf("make shared with custom alloc\n");
 #endif
             std::uint8_t* storage = static_cast<std::uint8_t*>(alloc.allocate(sizeof(T)));
-            return shared_ptr<T, Alloc>(alloc.template construct_at<T>(storage, std::forward<Args>(args)...));   
+            return shared_ptr<T, Alloc, is_stack_object>(alloc.template construct_at<T>(storage, std::forward<Args>(args)...));   
         }
     }
 }
