@@ -12,13 +12,10 @@
 
 #include "stack_allocator.hpp"
 
-// TODO: Think about own control block when we copying shared_ptrs and move
-// TODO: add logs control here
-
 namespace custom
 {
 	// default value for allocator - 30 bytes
-    template <typename T, typename Alloc = stack_allocator<void, 30>, bool is_stack_object = false>
+    template <typename T, typename Alloc = stack_allocator<void, 30>>
     class shared_ptr
     {
         // shared_ptr typedef's
@@ -63,13 +60,13 @@ namespace custom
 #if ON_SHARED_PTR_LOGS
                 std::cout << "default ctor called\n";
 #endif
-                cb = static_cast<cb_ptr>(m_alloc_traits::allocate(m_alloc, cb_size));
+                cb = reinterpret_cast<cb_ptr>(m_alloc_traits::allocate(m_alloc, cb_size));
                 cb->m_counter = 1;
 			}
 
             explicit shared_ptr(pointer ptr) 
             {
-                cb = static_cast<cb_ptr>(m_alloc_traits::allocate(m_alloc, cb_size));
+                cb = reinterpret_cast<cb_ptr>(m_alloc_traits::allocate(m_alloc, cb_size));
 
                 cb->m_root_ptr = ptr;
                 cb->m_counter = 1;
@@ -97,13 +94,10 @@ namespace custom
 #if ON_SHARED_PTR_LOGS
                     printf("deallocation of shared ptr: root ptr address = %p, counter = %zu, control_block address = %p\n", cb->m_root_ptr, cb->m_counter, cb);
 #endif			
-                    if constexpr (!is_stack_object)
-                    {
-                        delete cb->m_root_ptr;
-                    }
+                    delete cb->m_root_ptr;
 
-                    m_alloc_traits::destroy(m_alloc, cb);
-                    m_alloc_traits::deallocate(m_alloc, cb, cb_size);
+                    cb->~control_block();
+                    m_alloc_traits::deallocate(m_alloc, reinterpret_cast<m_alloc_traits::pointer>(cb), cb_size);
 
                     return;
                 }
@@ -179,14 +173,14 @@ namespace custom
     // make shared with custom allocator
     namespace alc
     {
-        template <typename T, typename Alloc = stack_allocator<void, 30>, bool is_stack_object = false, typename... Args>
-        shared_ptr<T, Alloc, is_stack_object> make_shared(Alloc& alloc, Args&&... args)
+        template <typename T, typename Alloc = stack_allocator<void, 30>, typename... Args>
+        shared_ptr<T, Alloc> make_shared(Alloc& alloc, Args&&... args)
         {
 #if ON_SHARED_PTR_LOGS
             printf("make shared with custom alloc\n");
 #endif
-            std::uint8_t* storage = static_cast<std::uint8_t*>(alloc.allocate(sizeof(T)));
-            return shared_ptr<T, Alloc, is_stack_object>(alloc.template construct_at<T>(storage, std::forward<Args>(args)...));   
+            T* storage = reinterpret_cast<T*>(alloc.allocate(sizeof(T)));
+            return shared_ptr<T, Alloc>(::new (storage) T(std::forward<Args>(args)...));   
         }
     }
 }
