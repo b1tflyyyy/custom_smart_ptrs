@@ -1,38 +1,90 @@
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
-#include <stack>
+#include <memory>
+
 #include "stack_allocator.hpp"
 #include "shared_ptr.hpp"
 
 // TODO: add logs in Makefile
-//
+// TODO: add new tests
+
+struct Object
+{
+    std::uint8_t array[1'073'741'824] = { 0, 1, 2, 3 };
+    std::uint8_t array1[1'073'741'824] = { 0, 1, 2, 3 };
+    std::uint8_t array2[1'073'741'824] = { 0, 1, 2, 3 };
+    std::uint8_t array3[1'073'741'824] = { 0, 1, 2, 3 };
+    std::uint8_t array4[1'073'741'824] = { 0, 1, 2, 3 };
+    std::uint8_t array5[1'073'741'824] = { 0, 1, 2, 3 };
+    void show()
+    {
+        for (std::size_t i{}; i < 1'073'741'824; ++i)
+        {
+            printf("elements: %d, %d, %d, %d, %d, %d\n", array[i], array1[i], array2[i], array3[i], array4[i], array5[i]);
+        }
+    }
+
+    void fill()
+    {
+        for (std::size_t i{}; i < 1'073'741'824; ++i)
+        {
+            array[i] = i;
+            array1[i] = i;
+            array2[i] = i;
+            array3[i] = i;
+            array4[i] = i;
+            array5[i] = i;
+        }
+    }
+};
 
 __inline void copy_test()
 {
-    stack_allocator alloc;
+    std::allocator<std::uint8_t> alloc;
     
-    auto ptr1 = custom::alc::make_shared<int, decltype(alloc), true>(alloc, 777);
+    auto ptr1 = custom::alc::make_shared<Object, decltype(alloc)>(alloc);
     
     auto ptr2(ptr1);
     auto ptr3(ptr1);
     auto ptr4(ptr3); 
 
     printf("\n=================COPY TEST==================\n");
-    printf("ptr1 = %d, ptr2 = %d, ptr3 = %d, ptr4 = %d\n", *ptr1, *ptr2, *ptr3, *ptr4);
+    printf("ptr1 = %p, ptr2 = %p, ptr3 = %p, ptr4 = %p\n", ptr1.get(), ptr2.get(), ptr3.get(), ptr4.get());
+
+    std::cin.get();
 }
 
 __inline void move_test()
 {
     printf("\n===================MOVE TEST====================\n");
-    auto ptr1 = custom::sta::make_shared<int>(33);
+    auto ptr1 = custom::sta::make_shared<Object>();
     auto ptr2(std::move(ptr1));
 
-    printf("ptr2 = %d\n", *ptr2);
+    printf("ptr2 = %p\n", ptr2.get());
+
+    std::cin.get();
 }
 
 int main()
 {
     copy_test();
     move_test();
+
+#if 0
+    std::allocator<std::uint8_t> alloc;
+    Object* obj1 = reinterpret_cast<Object*>(alloc.allocate(sizeof(Object)));
+    std::cout << "size of obj - " << sizeof(Object) << '\n';
+    printf("object filling started ...\n");
+    obj1->fill();
+    printf("object filling finished ... \n");
+    // obj1->show();
+    
+    Object* obj = new Object;
+    // obj->show();
+#endif
+
+    std::cin.get();
 
 	return 0;
 }
