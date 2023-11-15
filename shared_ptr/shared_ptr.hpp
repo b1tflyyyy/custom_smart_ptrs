@@ -3,14 +3,14 @@
 #ifndef SHARED_PTR_HPP
 #define SHARED_PTR_HPP
 
-#define ON_SHARED_PTR_LOGS 1
-
 #include <cstddef>
 #include <memory>
 #include <iostream>
 #include <cstdint>
 
 #include "stack_allocator.hpp"
+
+// TODO: add version for array
 
 namespace custom
 {
@@ -38,9 +38,6 @@ namespace custom
 
                 ~control_block() noexcept
                 {
-#if ON_SHARED_PTR_LOGS
-                    printf("~control_block()\n");
-#endif
                     m_counter = -1;
                     m_root_ptr = nullptr;
                 }
@@ -57,9 +54,6 @@ namespace custom
         public:
             constexpr shared_ptr() noexcept
             {
-#if ON_SHARED_PTR_LOGS
-                std::cout << "default ctor called\n";
-#endif
                 cb = reinterpret_cast<cb_ptr>(m_alloc_traits::allocate(m_alloc, cb_size));
                 cb->m_counter = 1;
 			}
@@ -82,18 +76,12 @@ namespace custom
             {
                 if (cb == nullptr)
                 {
-#if ON_SHARED_PTR_LOGS
-                    std::cout << "CB == NULLPTR\n";
-#endif
                     return;
                 }
 
                 --cb->m_counter;
                 if(cb->m_counter == 0)
                 {
-#if ON_SHARED_PTR_LOGS
-                    printf("deallocation of shared ptr: root ptr address = %p, counter = %zu, control_block address = %p\n", cb->m_root_ptr, cb->m_counter, cb);
-#endif			
                     delete cb->m_root_ptr;
 
                     cb->~control_block();
@@ -101,23 +89,12 @@ namespace custom
 
                     return;
                 }
-                
-#if ON_SHARED_PTR_LOGS
-                std::cout << "dtor skipped for object num: " << cb->m_counter << '\n';
-#endif
             }
 
             explicit shared_ptr(shared_ptr&& other) noexcept
             {
-#if ON_SHARED_PTR_LOGS
-                printf("move operator called, cb = %p, other.cb = %p\n", cb, other.cb);
-#endif		
                 cb = other.cb;
                 other.cb = nullptr;
-
-#if ON_SHARED_PTR_LOGS			
-                printf("move operator called, cb = %p, other.cb = %p\n", cb, other.cb);
-#endif
             }
 
             explicit operator bool() const noexcept
@@ -127,9 +104,6 @@ namespace custom
 
             shared_ptr& operator=(const shared_ptr& other) noexcept
             {
-#if ON_SHARED_PTR_LOGS
-                std::cout << "operator=\n";
-#endif		
                 cb = other.cb;
                 ++cb->m_counter;
 
@@ -163,22 +137,16 @@ namespace custom
         template <typename T, typename Alloc = stack_allocator<void, 30>, typename... Args>
         shared_ptr<T, Alloc> make_shared(Args&&... args)
         {
-#if ON_SHARED_PTR_LOGS
-            printf("make shared with new keyword\n");
-#endif
             return shared_ptr<T, Alloc>(new T(std::forward<Args>(args)...));
         }
     }
     
-    // make shared with custom allocator
+    // make shared with custom allocator (experimental implementation)
     namespace alc
     {
         template <typename T, typename Alloc = stack_allocator<void, 30>, typename... Args>
         shared_ptr<T, Alloc> make_shared(Alloc& alloc, Args&&... args)
         {
-#if ON_SHARED_PTR_LOGS
-            printf("make shared with custom alloc\n");
-#endif
             T* storage = reinterpret_cast<T*>(alloc.allocate(sizeof(T)));
             return shared_ptr<T, Alloc>(::new (storage) T(std::forward<Args>(args)...));   
         }
