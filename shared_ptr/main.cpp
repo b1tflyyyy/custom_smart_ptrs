@@ -9,6 +9,7 @@
 // TODO: add logs in Makefile
 // TODO: add new tests
 
+// object use 6 gb of memory
 struct Object
 {
     std::uint8_t array[1'073'741'824] = { 0, 1, 2, 3 };
@@ -51,6 +52,7 @@ __inline void copy_test()
 
     printf("\n=================COPY TEST==================\n");
     printf("ptr1 = %p, ptr2 = %p, ptr3 = %p, ptr4 = %p\n", ptr1.get(), ptr2.get(), ptr3.get(), ptr4.get());
+    printf("press any key for continue\n");
 
     std::cin.get();
 }
@@ -62,6 +64,7 @@ __inline void move_test()
     auto ptr2(std::move(ptr1));
 
     printf("ptr2 = %p\n", ptr2.get());
+    printf("press any key for continue\n");
 
     std::cin.get();
 }
