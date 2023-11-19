@@ -3,7 +3,6 @@
 #include "stack_allocator.hpp"
 #include "shared_ptr.hpp"
 
-// 
 // TODO: add new tests
 
 // object use 6 gb of memory
