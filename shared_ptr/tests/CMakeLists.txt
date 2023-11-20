@@ -4,7 +4,8 @@ project(Tests)
 
 set(SOURCES
     main_test.cpp
-    shared_ptr_test.cpp)
+    shared_ptr_test.cpp
+    stack_allocator_test.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 

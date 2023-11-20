@@ -71,19 +71,6 @@ int main()
     copy_test();
     move_test();
 
-#if 0
-    std::allocator<std::uint8_t> alloc;
-    Object* obj1 = reinterpret_cast<Object*>(alloc.allocate(sizeof(Object)));
-    std::cout << "size of obj - " << sizeof(Object) << '\n';
-    printf("object filling started ...\n");
-    obj1->fill();
-    printf("object filling finished ... \n");
-    // obj1->show();
-    
-    Object* obj = new Object;
-    // obj->show();
-#endif
-
     std::cin.get();
 
 	return 0;
