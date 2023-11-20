@@ -3,7 +3,8 @@ cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 project(Tests)
 
 set(SOURCES
-    main_test.cpp)
+    main_test.cpp
+    shared_ptr_test.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 

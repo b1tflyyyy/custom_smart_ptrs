@@ -3,7 +3,7 @@
 #ifndef STACK_ALLOCATOR_HPP
 #define STACK_ALLOCATOR_HPP
 
-#define ON_STACK_ALLOCATOR_LOGS 1
+#define ON_STACK_ALLOCATOR_LOGS 0
 
 #include <cstdint>
 #include <stdio.h>
