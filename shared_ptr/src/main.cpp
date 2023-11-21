@@ -68,8 +68,20 @@ __inline void move_test()
 
 int main()
 {
+#if 0
     copy_test();
     move_test();
+#endif
+
+    std::allocator<std::uint8_t> alloc;
+
+    {
+        custom::shared_ptr<int[], decltype(alloc)> ptr(new int[10]{7, 8});
+        auto ptr1(ptr);
+
+        std::cout << ptr1[0] << " " << ptr1[1] << '\n';
+    }
+
 
     std::cin.get();
 
