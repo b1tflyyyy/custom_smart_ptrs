@@ -75,13 +75,9 @@ int main()
 
     std::allocator<std::uint8_t> alloc;
 
-    {
-        custom::shared_ptr<int[], decltype(alloc)> ptr(new int[10]{7, 8});
-        auto ptr1(ptr);
-
-        std::cout << ptr1[0] << " " << ptr1[1] << '\n';
-    }
-
+    custom::shared_ptr<int> ptr = custom::sta::make_shared<int>(6);
+    custom::shared_ptr<int[]> ptr1 = custom::sta::make_shared<int[]>(100);
+    custom::shared_ptr<int[], decltype(alloc)> ptr2 = custom::alc::make_shared<int[], decltype(alloc)>(alloc, 44);
 
     std::cin.get();
 
