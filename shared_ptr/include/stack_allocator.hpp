@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdexcept>
 
+// change T = void to T = std::uint8_t
 template <typename T = void, std::size_t SIZE = 100> requires std::is_same_v<T, void>
 class stack_allocator
 {

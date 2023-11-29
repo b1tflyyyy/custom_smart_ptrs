@@ -61,26 +61,29 @@ TEST(SharedPtrTests, SharedPtrTests_ON_MOVE_VALUE)
 
 
 // ===================================================== ARRAY SHARED PTR =====================================================
-#if 0
 // TODO: add make_shared version for array
-TEST(SharedPtrTests, SharedPtrTests_ARRAY_DEFAULT_MAKE_SHARED_WITH_PARAMS)
-{
-    auto ptr = custom::sta::make_shared<int>(777);
-    const auto expected = 777;
-
-    ASSERT_EQ(*ptr, expected);
-}
-
-TEST(SharedPtrTests, SharedPtrTests_ALLOC_MAKE_SHARED_WITH_PARAMS)
+TEST(SharedPtrTests, SharedPtrTests_ARRAY_DEFAULT_MAKE_SHARED)
 {
     std::allocator<std::uint8_t> alloc;
-    auto ptr = custom::alc::make_shared<int, decltype(alloc)>(alloc, 777);
 
+    custom::shared_ptr<int[]> ptr = custom::sta::make_shared<int[]>(6);
     const auto expected = 777;
 
-    ASSERT_EQ(*ptr, expected);
+    ptr[7] = 777;
+
+    ASSERT_EQ(ptr[7], expected);
 }
-#endif
+
+TEST(SharedPtrTests, SharedPtrTests_ALLOC_MAKE_SHARED)
+{
+    std::allocator<std::uint8_t> alloc;
+    auto ptr = custom::alc::make_shared<int[], decltype(alloc)>(alloc, 777);
+
+    ptr[6] = 777;
+    const auto expected = 777;
+
+    ASSERT_EQ(ptr[6], expected);
+}
 
 TEST(SharedPtrTests, SharedPtrTests_ARRAY_DEFAULT_CTOR)
 {

@@ -7,10 +7,11 @@
 #include <memory>
 #include <iostream>
 #include <cstdint>
+#include <type_traits>
 
 #include "stack_allocator.hpp"
 
-// TODO: add make_shared version for array
+// TODO: add custom deleter
 
 namespace custom
 {
@@ -251,21 +252,39 @@ namespace custom
     // standard make_shared
     namespace sta
     {
-        template <typename T, typename Alloc = stack_allocator<void, 30>, typename... Args>
+        template <typename T,
+                  typename Alloc = stack_allocator<void, 30>,
+                  typename = std::enable_if_t<!std::is_array_v<T>>,
+                  typename... Args>
         shared_ptr<T, Alloc> make_shared(Args&&... args)
         {
-            return shared_ptr<T, Alloc>(new T(std::forward<Args>(args)...));
+            return shared_ptr<T, Alloc>(::new T(std::forward<Args>(args)...));
+        }
+
+        template <typename T, typename Alloc = stack_allocator<void, 30>> requires std::is_array_v<T>
+        shared_ptr<T, Alloc> make_shared(std::size_t N)
+        {
+            return shared_ptr<T, Alloc>(::new std::remove_all_extents_t<T>[N] { });
         }
     }
     
     // make shared with custom allocator (experimental implementation)
     namespace alc
     {
-        template <typename T, typename Alloc = stack_allocator<void, 30>, typename... Args>
+        template <typename T,
+                  typename Alloc = stack_allocator<void, 30>,
+                  typename = std::enable_if_t<!std::is_array_v<T>>,
+                  typename... Args>
         shared_ptr<T, Alloc> make_shared(Alloc& alloc, Args&&... args)
         {
             T* storage = reinterpret_cast<T*>(alloc.allocate(sizeof(T)));
             return shared_ptr<T, Alloc>(::new (storage) T(std::forward<Args>(args)...));   
+        }
+
+        template <typename T, typename Alloc = stack_allocator<void, 30>> requires std::is_array_v<T>
+        shared_ptr<T, Alloc> make_shared(Alloc& alloc, std::size_t N)
+        {
+            return shared_ptr<T, Alloc>(reinterpret_cast<std::remove_all_extents_t<T>*>(alloc.allocate(sizeof(std::remove_all_extents_t<T>) * N)));
         }
     }
 }
