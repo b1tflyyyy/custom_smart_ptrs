@@ -5,6 +5,7 @@
 
 // TODO: add new tests
 
+#if 0
 // object use 6 gb of memory
 struct Object
 {
@@ -39,7 +40,7 @@ struct Object
 
 __inline void copy_test()
 {
-    std::allocator<std::uint8_t> alloc;
+    std::alloc<std::uint8_t> alloc;
     
     auto ptr1 = custom::alc::make_shared<Object, decltype(alloc)>(alloc);
     
@@ -65,6 +66,12 @@ __inline void move_test()
 
     std::cin.get();
 }
+#endif
+
+void del(int* ptr, std::size_t sz)
+{
+    delete ptr;
+}
 
 int main()
 {
@@ -72,14 +79,10 @@ int main()
     copy_test();
     move_test();
 #endif
+    custom::shared_ptr<int> ptr = custom::sta::make_shared<int>(555);
+    auto ptr1(ptr);
 
-    std::allocator<std::uint8_t> alloc;
-
-    custom::shared_ptr<int> ptr = custom::sta::make_shared<int>(6);
-    custom::shared_ptr<int[]> ptr1 = custom::sta::make_shared<int[]>(100);
-    custom::shared_ptr<int[], decltype(alloc)> ptr2 = custom::alc::make_shared<int[], decltype(alloc)>(alloc, 44);
-
-    std::cin.get();
+    printf("p1 = %d, p2 = %d\n", *ptr, *ptr1);
 
 	return 0;
 }
