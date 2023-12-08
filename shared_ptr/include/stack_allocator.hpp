@@ -104,7 +104,7 @@ class stack_allocator
             ptr->~U();
         }
 
-        const size_type get_memory_used() const 
+        [[nodiscard]] const size_type get_memory_used() const
         {
             return m_memory_used;
         }

@@ -8,15 +8,17 @@
 #include <iostream>
 #include <cstdint>
 #include <type_traits>
+#include <functional>
 
 #include "stack_allocator.hpp"
 
-// TODO: add custom deleter
-
+// TODO: add custom deleter for array version and for make_shared
 namespace custom
 {
-	// default value for allocator - 30 bytes
-    template <typename T, typename Alloc = stack_allocator<void, 30>>
+    typedef stack_allocator<void, 50> default_alloc_t;
+
+	// default value for alloc - 30 bytes
+    template <typename T, typename Alloc = default_alloc_t>
     class shared_ptr
     {
         // shared_ptr typedef's
@@ -25,22 +27,35 @@ namespace custom
             typedef T value_type;
             typedef T& reference;
 		
-        // allocator typedef's
+        // alloc typedef's
         private:
             Alloc m_alloc;
             typedef std::allocator_traits<Alloc> m_alloc_traits;
+
+        private:
+            typedef std::function<void(pointer, std::size_t)> deleter_t;
 			
         // control block typedef's
         private:
             struct control_block
             {
-                std::size_t m_counter = -1;
-                pointer m_root_ptr = nullptr;
+                std::size_t m_counter;
+                pointer m_root_ptr;
+
+                constexpr static std::size_t m_root_object_size = sizeof(std::remove_all_extents_t<T>);
+                deleter_t m_deleter;
+
+                explicit control_block(std::size_t counter, pointer root_ptr, deleter_t&& deleter) :
+                    m_counter(counter),
+                    m_root_ptr(root_ptr),
+                    m_deleter(std::move(deleter))
+                { }
 
                 ~control_block() noexcept
                 {
                     m_counter = -1;
                     m_root_ptr = nullptr;
+                    m_deleter = nullptr;
                 }
             };
 			
@@ -56,17 +71,15 @@ namespace custom
             constexpr shared_ptr() noexcept
             {
                 cb = reinterpret_cast<cb_ptr>(m_alloc_traits::allocate(m_alloc, cb_size));
-                cb->m_counter = 1;
+                ::new (cb) control_block(1, nullptr, [](pointer ptr, std::size_t sz) -> void { delete ptr; });
 			}
 
-            explicit shared_ptr(pointer ptr) 
+            explicit shared_ptr(pointer ptr, deleter_t&& deleter = [](pointer ptr, std::size_t sz) -> void { delete ptr; }) noexcept
             {
                 cb = reinterpret_cast<cb_ptr>(m_alloc_traits::allocate(m_alloc, cb_size));
-
-                cb->m_root_ptr = ptr;
-                cb->m_counter = 1;
+                ::new (cb) control_block(1, ptr, std::move(deleter));
             }
-			
+
             explicit shared_ptr(const shared_ptr& other) noexcept
             {
                 cb = other.cb;
@@ -83,7 +96,7 @@ namespace custom
                 --cb->m_counter;
                 if(cb->m_counter == 0)
                 {
-                    delete cb->m_root_ptr;
+                    cb->m_deleter(cb->m_root_ptr, cb->m_root_object_size);
 
                     cb->~control_block();
                     m_alloc_traits::deallocate(m_alloc, reinterpret_cast<m_alloc_traits::pointer>(cb), cb_size);
@@ -124,7 +137,7 @@ namespace custom
                 return cb->m_root_ptr;
             }
 			
-            std::size_t use_count() const noexcept
+            [[nodiscard]] std::size_t use_count() const noexcept
             {
                 return cb->m_counter;
             }
@@ -139,7 +152,7 @@ namespace custom
             typedef T value_type;
             typedef T& reference;
 
-        // allocator typedef's
+        // alloc typedef's
         private:
             Alloc m_alloc;
             typedef std::allocator_traits<Alloc> m_alloc_traits;
@@ -243,7 +256,7 @@ namespace custom
                 return cb->m_root_ptr;
             }
 
-            std::size_t use_count() const noexcept
+            [[nodiscard]] std::size_t use_count() const noexcept
             {
                 return cb->m_counter;
             }
@@ -253,7 +266,7 @@ namespace custom
     namespace sta
     {
         template <typename T,
-                  typename Alloc = stack_allocator<void, 30>,
+                  typename Alloc = default_alloc_t,
                   typename = std::enable_if_t<!std::is_array_v<T>>,
                   typename... Args>
         shared_ptr<T, Alloc> make_shared(Args&&... args)
@@ -261,18 +274,18 @@ namespace custom
             return shared_ptr<T, Alloc>(::new T(std::forward<Args>(args)...));
         }
 
-        template <typename T, typename Alloc = stack_allocator<void, 30>> requires std::is_array_v<T>
+        template <typename T, typename Alloc = default_alloc_t> requires std::is_array_v<T>
         shared_ptr<T, Alloc> make_shared(std::size_t N)
         {
             return shared_ptr<T, Alloc>(::new std::remove_all_extents_t<T>[N] { });
         }
     }
     
-    // make shared with custom allocator (experimental implementation)
+    // make shared with custom alloc (experimental implementation)
     namespace alc
     {
         template <typename T,
-                  typename Alloc = stack_allocator<void, 30>,
+                  typename Alloc = default_alloc_t,
                   typename = std::enable_if_t<!std::is_array_v<T>>,
                   typename... Args>
         shared_ptr<T, Alloc> make_shared(Alloc& alloc, Args&&... args)
@@ -281,7 +294,7 @@ namespace custom
             return shared_ptr<T, Alloc>(::new (storage) T(std::forward<Args>(args)...));   
         }
 
-        template <typename T, typename Alloc = stack_allocator<void, 30>> requires std::is_array_v<T>
+        template <typename T, typename Alloc = default_alloc_t> requires std::is_array_v<T>
         shared_ptr<T, Alloc> make_shared(Alloc& alloc, std::size_t N)
         {
             return shared_ptr<T, Alloc>(reinterpret_cast<std::remove_all_extents_t<T>*>(alloc.allocate(sizeof(std::remove_all_extents_t<T>) * N)));
