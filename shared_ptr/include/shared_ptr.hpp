@@ -12,7 +12,6 @@
 
 #include "stack_allocator.hpp"
 
-// TODO: add custom deleter for array version and for make_shared
 namespace custom
 {
     typedef stack_allocator<void, 50> default_alloc_t;
@@ -271,43 +270,19 @@ namespace custom
             }
     };
 
-    // standard make_shared
-    namespace sta
+    template <typename T,
+              typename Alloc = default_alloc_t,
+              typename = std::enable_if_t<!std::is_array_v<T>>,
+              typename... Args>
+    shared_ptr<T, Alloc> make_shared(Args&&... args)
     {
-        template <typename T,
-                  typename Alloc = default_alloc_t,
-                  typename = std::enable_if_t<!std::is_array_v<T>>,
-                  typename... Args>
-        shared_ptr<T, Alloc> make_shared(Args&&... args)
-        {
-            return shared_ptr<T, Alloc>(::new T(std::forward<Args>(args)...));
-        }
-
-        template <typename T, typename Alloc = default_alloc_t> requires std::is_array_v<T>
-        shared_ptr<T, Alloc> make_shared(std::size_t N)
-        {
-            return shared_ptr<T, Alloc>(::new std::remove_all_extents_t<T>[N] { });
-        }
+        return shared_ptr<T, Alloc>(::new T(std::forward<Args>(args)...));
     }
-    
-    // make shared with custom alloc (experimental implementation)
-    namespace alc
-    {
-        template <typename T,
-                  typename Alloc = default_alloc_t,
-                  typename = std::enable_if_t<!std::is_array_v<T>>,
-                  typename... Args>
-        shared_ptr<T, Alloc> make_shared(Alloc& alloc, Args&&... args)
-        {
-            T* storage = reinterpret_cast<T*>(alloc.allocate(sizeof(T)));
-            return shared_ptr<T, Alloc>(::new (storage) T(std::forward<Args>(args)...));   
-        }
 
-        template <typename T, typename Alloc = default_alloc_t> requires std::is_array_v<T>
-        shared_ptr<T, Alloc> make_shared(Alloc& alloc, std::size_t N)
-        {
-            return shared_ptr<T, Alloc>(reinterpret_cast<std::remove_all_extents_t<T>*>(alloc.allocate(sizeof(std::remove_all_extents_t<T>) * N)));
-        }
+    template <typename T, typename Alloc = default_alloc_t> requires std::is_array_v<T>
+    shared_ptr<T, Alloc> make_shared(std::size_t N)
+    {
+        return shared_ptr<T, Alloc>(::new std::remove_all_extents_t<T>[N] { });
     }
 }
 

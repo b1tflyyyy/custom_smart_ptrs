@@ -32,7 +32,7 @@ TEST(SharedPtrTests, SharedPtrTests_CUSTOM_ALLOC_DELETER)
 
 TEST(SharedPtrTests, SharedPtrTests_MAKE_SHARED)
 {
-    auto ptr = custom::sta::make_shared<int>(55);
+    auto ptr = custom::make_shared<int>(55);
     ASSERT_EQ(*ptr, 55);
 }
 
@@ -76,7 +76,7 @@ TEST(SharedPtrTests, SharedPtrArrayTests_CUSTOM_ALLOC_DELETER)
 
 TEST(SharedPtrTests, SharedPtrArrayTests_MAKE_SHARED)
 {
-    auto ptr = custom::sta::make_shared<int[]>(3);
+    auto ptr = custom::make_shared<int[]>(3);
 
     ptr[0] = 1;
     ptr[1] = 2;

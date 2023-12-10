@@ -3,8 +3,6 @@
 #include "stack_allocator.hpp"
 #include "shared_ptr.hpp"
 
-// TODO: add new tests
-
 #if 0
 // object use 6 gb of memory
 struct Object
@@ -37,49 +35,11 @@ struct Object
         }
     }
 };
-
-__inline void copy_test()
-{
-    std::alloc<std::uint8_t> alloc;
-    
-    auto ptr1 = custom::alc::make_shared<Object, decltype(alloc)>(alloc);
-    
-    auto ptr2(ptr1);
-    auto ptr3(ptr1);
-    auto ptr4(ptr3); 
-
-    printf("\n=================COPY TEST==================\n");
-    printf("ptr1 = %p, ptr2 = %p, ptr3 = %p, ptr4 = %p\n", ptr1.get(), ptr2.get(), ptr3.get(), ptr4.get());
-    printf("press any key for continue\n");
-
-    std::cin.get();
-}
-
-__inline void move_test()
-{
-    printf("\n===================MOVE TEST====================\n");
-    auto ptr1 = custom::sta::make_shared<Object>();
-    auto ptr2(std::move(ptr1));
-
-    printf("ptr2 = %p\n", ptr2.get());
-    printf("press any key for continue\n");
-
-    std::cin.get();
-}
 #endif
-
-void del(int* ptr, std::size_t sz)
-{
-    delete ptr;
-}
 
 int main()
 {
-#if 0
-    copy_test();
-    move_test();
-#endif
-    custom::shared_ptr<int> ptr = custom::sta::make_shared<int>(555);
+    custom::shared_ptr<int> ptr = custom::make_shared<int>(555);
     auto ptr1(ptr);
 
     printf("p1 = %d, p2 = %d\n", *ptr, *ptr1);
