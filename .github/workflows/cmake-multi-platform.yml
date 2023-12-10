@@ -38,9 +38,11 @@ jobs:
       - name: Running shared_ptr Tests
         run: |
           if [ ${{ matrix.os }} == 'windows-latest' ]; then
+            dir
             cd build/tests/Debug
             ./Tests.exe
           elif [ ${{ matrix.os }} == 'ubuntu-latest' ]; then
+            ls
             cd build/tests
             ./Tests
           fi
