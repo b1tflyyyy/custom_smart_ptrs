@@ -157,17 +157,28 @@ namespace custom
             Alloc m_alloc;
             typedef std::allocator_traits<Alloc> m_alloc_traits;
 
+    private:
+        typedef std::function<void(pointer)> deleter_t;
+
         // control block typedef's
         private:
             struct control_block
             {
-                std::size_t m_counter = -1;
-                pointer m_root_ptr = nullptr;
+                std::size_t m_counter;
+                pointer m_root_ptr;
+                deleter_t m_deleter;
+
+                explicit control_block(std::size_t counter, pointer root_ptr, deleter_t&& deleter) :
+                    m_counter(counter),
+                    m_root_ptr(root_ptr),
+                    m_deleter(std::move(deleter))
+                { }
 
                 ~control_block() noexcept
                 {
                     m_counter = -1;
                     m_root_ptr = nullptr;
+                    m_deleter = nullptr;
                 }
             };
 
@@ -183,15 +194,13 @@ namespace custom
             constexpr shared_ptr() noexcept
             {
                 cb = reinterpret_cast<cb_ptr>(m_alloc_traits::allocate(m_alloc, cb_size));
-                cb->m_counter = 1;
+                ::new (cb) control_block(1, nullptr, [](pointer ptr) -> void { delete[] ptr; });
             }
 
-            explicit shared_ptr(pointer ptr)
+            explicit shared_ptr(pointer ptr, deleter_t&& deleter = [](pointer ptr) -> void { delete[] ptr; }) noexcept
             {
                 cb = reinterpret_cast<cb_ptr>(m_alloc_traits::allocate(m_alloc, cb_size));
-
-                cb->m_root_ptr = ptr;
-                cb->m_counter = 1;
+                ::new (cb) control_block(1, ptr, std::move(deleter));
             }
 
             explicit shared_ptr(const shared_ptr& other) noexcept
@@ -210,7 +219,7 @@ namespace custom
                 --cb->m_counter;
                 if(cb->m_counter == 0)
                 {
-                    delete[] cb->m_root_ptr;
+                    cb->m_deleter(cb->m_root_ptr);
 
                     cb->~control_block();
                     m_alloc_traits::deallocate(m_alloc, reinterpret_cast<m_alloc_traits::pointer>(cb), cb_size);
