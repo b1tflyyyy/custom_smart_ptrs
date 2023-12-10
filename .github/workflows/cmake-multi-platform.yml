@@ -39,11 +39,11 @@ jobs:
         run: |
           if [ ${{ matrix.os }} == 'windows-latest' ]; then
             dir
-            cd build/tests/Debug
+            cd shared_ptr/build/tests/Debug
             ./Tests.exe
           elif [ ${{ matrix.os }} == 'ubuntu-latest' ]; then
             ls
-            cd build/tests
+            cd shared_ptr/build/tests
             ./Tests
           fi
         shell: bash
