@@ -14,7 +14,11 @@
 
 namespace custom
 {
+#if defined(linux) || defined(__unix__) || defined(__linux__)
     typedef stack_allocator<void, 50> default_alloc_t;
+#elif defined(_WIN32) || defined(WIN32)
+    typedef stack_allocator<void, 100> default_alloc_t;
+#endif
 
 	// default value for alloc - 30 bytes
     template <typename T, typename Alloc = default_alloc_t>
