@@ -6,6 +6,8 @@
 #include <type_traits>
 #include <iostream>
 
+// TODO: add google tests, add custom deleter
+
 namespace custom
 {
 	template <typename T>
@@ -14,7 +16,8 @@ namespace custom
 	private:
 		typedef T* pointer;
 		typedef T value_type;
-	private:
+
+    private:
 		pointer m_root_ptr;
 
 	public:
@@ -60,7 +63,6 @@ namespace custom
 		{
 			return m_root_ptr;
 		}
-
 	};
 
 	template <typename T>
@@ -120,8 +122,7 @@ namespace custom
 		value_type& operator[](std::size_t index)
 		{
 			return m_root_ptr[index];
-		}	
-
+		}
 	};
 }
 
