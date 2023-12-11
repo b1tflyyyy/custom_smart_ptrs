@@ -3,11 +3,11 @@
 
 int main()
 {
-	custom::unique_ptr<int[]> ptr(new int[] { 0 });
-	std::cout << *ptr << '\n';
+    custom::unique_ptr<int> ptr(new int(5));
+    auto copy = *ptr;
 
-	ptr[0] = 22;
-	std::cout << ptr[0] << '\n';
+    auto ptr1(std::move(ptr));
+    std::cout << *ptr1 << " " << copy << '\n';
 
 	return 0;
 }
