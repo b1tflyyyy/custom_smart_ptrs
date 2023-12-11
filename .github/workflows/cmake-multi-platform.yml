@@ -4,16 +4,18 @@ on:
   push:
     branches:
       - main
-      - dev
 
   pull_request:
     branches:
       - main
-      - dev
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ windows-latest, ubuntu-latest ]
 
     steps:
       - name: Checkout repository
@@ -35,8 +37,13 @@ jobs:
 
       - name: Running shared_ptr Tests
         run: |
-            cd shared_ptr/build/tests
+          if [ ${{ matrix.os }} == 'windows-latest' ]; then
+            cd build/tests/Debug
+            ./Tests.exe
+          elif [ ${{ matrix.os }} == 'ubuntu-latest' ]; then
+            cd build/tests
             ./Tests
+          fi
         shell: bash
 
 # =========================================================================================================
