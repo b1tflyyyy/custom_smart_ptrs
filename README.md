@@ -12,5 +12,5 @@ This project was created to show a simple implementation of smart_ptrs it includ
 
 ---
 ## Support status on systems:
-- [ ] Windows (soon)
+- [x] Windows
 - [x] Linux
