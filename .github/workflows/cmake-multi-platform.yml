@@ -49,11 +49,6 @@ jobs:
         shell: bash
 
 # =================================== UNIQUE_PTR ===================================
-      - name: Clone googletest repository to unique_ptr
-        run: |
-          cd unique_ptr
-          git clone https://github.com/google/googletest.git
-
       - name: Build unique_ptr CMake
         run: |
           cd unique_ptr
