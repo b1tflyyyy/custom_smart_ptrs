@@ -39,6 +39,14 @@ TEST(UniquePtrTests, UniquePtrDefaultTests_BOOL_OPERATOR_GET)
     FAIL();
 }
 
+TEST(UniquePtrTests, UniquePtrDefaultTests_MAKE_UNIQUE)
+{
+    const auto expected = 5;
+    custom::unique_ptr<int> ptr = custom::make_unique<int>(expected);
+
+    ASSERT_EQ(expected, *ptr);
+}
+
 // ============================================= ARRAY UNIQUE PTR =============================================
 TEST(UniquePtrTests, UniquePtrArrayTests_CTOR_MOVE_OPERATORS)
 {
@@ -78,4 +86,17 @@ TEST(UniquePtrTests, UniquePtrArrayTests_BOOL_OPERATOR_GET)
     }
 
     FAIL();
+}
+
+TEST(UniquePtrTests, UniquePtrArrayTests_MAKE_UNIQUE)
+{
+    custom::unique_ptr<int[]> ptr = custom::make_unique<int[]>(3);
+
+    ptr[0] = 0;
+    ptr[1] = 1;
+    ptr[2] = 2;
+
+    ASSERT_EQ(ptr[0], 0);
+    ASSERT_EQ(ptr[1], 1);
+    ASSERT_EQ(ptr[2], 2);
 }

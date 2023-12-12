@@ -148,6 +148,20 @@ namespace custom
 			return m_root_ptr[idx];
 		}
 	};
+
+    template <typename T,
+              typename = std::enable_if_t<!std::is_array_v<T>>,
+              typename... Args>
+    unique_ptr<T> make_unique(Args&&... args)
+    {
+        return unique_ptr<T>(::new T(std::forward<Args>(args)...));
+    }
+
+    template <typename T> requires std::is_array_v<T>
+    unique_ptr<T> make_unique(std::size_t N)
+    {
+        return unique_ptr<T>(::new std::remove_all_extents_t<T>[N] { });
+    }
 }
 
 #endif
