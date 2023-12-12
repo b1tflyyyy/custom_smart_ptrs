@@ -47,4 +47,30 @@ jobs:
             ./Tests
           fi
         shell: bash
-# =========================================================================================================
+
+# =================================== UNIQUE_PTR ===================================
+      - name: Clone googletest repository to unique_ptr
+        run: |
+          cd unique_ptr
+          git clone https://github.com/google/googletest.git
+
+      - name: Build unique_ptr CMake
+        run: |
+          cd unique_ptr
+          mkdir build
+          cd build
+          cmake ..
+          cmake --build .
+
+      - name: Running unique_ptr Tests
+        run: |
+          if [ ${{ matrix.os }} == 'windows-latest' ]; then
+            dir
+            cd unique_ptr/build/tests/Debug
+            ./Tests.exe
+          elif [ ${{ matrix.os }} == 'ubuntu-latest' ]; then
+            ls
+            cd unique_ptr/build/tests
+            ./Tests
+          fi
+        shell: bash
