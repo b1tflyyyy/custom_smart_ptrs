@@ -17,10 +17,10 @@ TEST(SharedPtrTests, SharedPtrTests_COPY)
 TEST(SharedPtrTests, SharedPtrTests_CUSTOM_ALLOC_DELETER)
 {
     std::allocator<int> alloc;
-    int* num = alloc.allocate(sizeof(int));
+    int* num = alloc.allocate(1);
     *num = 55;
 
-    custom::shared_ptr<int> ptr(num, [&alloc](int* ptr, std::size_t sz) -> void { alloc.deallocate(ptr, sz); });
+    custom::shared_ptr<int> ptr(num, [&alloc](int* ptr) -> void { alloc.deallocate(ptr, 1); });
 
     { auto ptr2(ptr); }
     auto ptr1(ptr);
@@ -55,13 +55,13 @@ TEST(SharedPtrTests, SharedPtrArrayTests_COPY)
 TEST(SharedPtrTests, SharedPtrArrayTests_CUSTOM_ALLOC_DELETER)
 {
     std::allocator<int> alloc;
-    int* num = alloc.allocate(sizeof(int) * 3);
+    int* num = alloc.allocate(3);
 
     num[0] = 55;
     num[1] = 77;
     num[2] = 88;
 
-    custom::shared_ptr<int[]> ptr(num, [&alloc](int* ptr) -> void { alloc.deallocate(ptr, sizeof(int) * 3); });
+    custom::shared_ptr<int[]> ptr(num, [&alloc](int* ptr) -> void { alloc.deallocate(ptr, 3); });
 
     { auto ptr2(ptr); }
     auto ptr1(ptr);
