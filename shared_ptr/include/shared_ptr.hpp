@@ -20,7 +20,6 @@ namespace custom
     typedef stack_allocator<void, 100> default_alloc_t;
 #endif
 
-	// default value for alloc - 30 bytes
     template <typename T, typename Alloc = default_alloc_t>
     class shared_ptr
     {
@@ -36,7 +35,7 @@ namespace custom
             typedef std::allocator_traits<Alloc> m_alloc_traits;
 
         private:
-            typedef std::function<void(pointer, std::size_t)> deleter_t;
+            typedef std::function<void(pointer)> deleter_t;
 			
         // control block typedef's
         private:
@@ -44,8 +43,6 @@ namespace custom
             {
                 std::size_t m_counter;
                 pointer m_root_ptr;
-
-                constexpr static std::size_t m_root_object_size = sizeof(std::remove_all_extents_t<T>);
                 deleter_t m_deleter;
 
                 explicit control_block(std::size_t counter, pointer root_ptr, deleter_t&& deleter) :
@@ -74,10 +71,10 @@ namespace custom
             constexpr shared_ptr() noexcept
             {
                 cb = reinterpret_cast<cb_ptr>(m_alloc_traits::allocate(m_alloc, cb_size));
-                ::new (cb) control_block(1, nullptr, [](pointer ptr, std::size_t sz) -> void { delete ptr; });
+                ::new (cb) control_block(1, nullptr, [](pointer ptr) -> void { delete ptr; });
 			}
 
-            explicit shared_ptr(pointer ptr, deleter_t&& deleter = [](pointer ptr, std::size_t sz) -> void { delete ptr; }) noexcept
+            explicit shared_ptr(pointer ptr, deleter_t&& deleter = [](pointer ptr) -> void { delete ptr; }) noexcept
             {
                 cb = reinterpret_cast<cb_ptr>(m_alloc_traits::allocate(m_alloc, cb_size));
                 ::new (cb) control_block(1, ptr, std::move(deleter));
@@ -99,7 +96,7 @@ namespace custom
                 --cb->m_counter;
                 if(cb->m_counter == 0)
                 {
-                    cb->m_deleter(cb->m_root_ptr, cb->m_root_object_size);
+                    cb->m_deleter(cb->m_root_ptr);
 
                     cb->~control_block();
                     m_alloc_traits::deallocate(m_alloc, reinterpret_cast<m_alloc_traits::pointer>(cb), cb_size);
