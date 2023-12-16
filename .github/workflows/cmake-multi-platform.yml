@@ -22,49 +22,48 @@ jobs:
         uses: actions/checkout@v2
 
 # =================================== SHARED_PTR ===================================
-      - name: Clone googletest repository to shared_ptr
-        run: |
-          cd shared_ptr
-          git clone https://github.com/google/googletest.git
-
-      - name: Build shared_ptr CMake
+      - name: Configure CMake -> shared_ptr
         run: |
           cd shared_ptr
           mkdir build
           cd build
           cmake ..
+
+      - name: Build -> shared_ptr
+        run: |
+          cd shared_ptr/build
           cmake --build .
 
-      - name: Running shared_ptr Tests
+      - name: Running Tests -> shared_ptr
         run: |
           if [ ${{ matrix.os }} == 'windows-latest' ]; then
-            dir
             cd shared_ptr/build/tests/Debug
             ./Tests.exe
           elif [ ${{ matrix.os }} == 'ubuntu-latest' ]; then
-            ls
             cd shared_ptr/build/tests
             ./Tests
           fi
         shell: bash
 
 # =================================== UNIQUE_PTR ===================================
-      - name: Build unique_ptr CMake
+      - name: Configure CMake -> unique_ptr
         run: |
           cd unique_ptr
           mkdir build
           cd build
           cmake ..
+
+      - name: Build -> unique_ptr
+        run: |
+          cd unique_ptr/build
           cmake --build .
 
-      - name: Running unique_ptr Tests
+      - name: Running Tests -> unique_ptr
         run: |
           if [ ${{ matrix.os }} == 'windows-latest' ]; then
-            dir
             cd unique_ptr/build/tests/Debug
             ./Tests.exe
           elif [ ${{ matrix.os }} == 'ubuntu-latest' ]; then
-            ls
             cd unique_ptr/build/tests
             ./Tests
           fi
